@@ -47,7 +47,7 @@ def parse_headers(str)
             dbg "DEBUG4 offset now: #{offset}, next_char: #{next_char}"
             if next_char != ' ' && next_char != "\t"
                 dbg "DEBUG5 next_char is not space it's code: #{next_char.ord}, title value: #{str[title_position..crlf_index-1]}, from: #{title_position} to #{crlf_index}"
-                headers[title] = str[title_position + 2..crlf_index]
+                headers[title] = str[title_position + 2..crlf_index-1]
                 break
             end
             dbg "DEBUG6 nex_char is space, next iteration"

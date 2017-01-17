@@ -63,12 +63,12 @@ class Email
     end
 
     def decode_header(str)
-        parts = str.split("\r\n")
+        parts = str.split(/\r\n/)
         decoded = parts.map do |part|
-            if part.start_with?("=?")
-                chunks = str.split("?").drop(1)
+            if part.strip().start_with?("=?")
+                chunks = part.strip().split("?")[1...-1] # drop =? and ?=
                 charset = chunks[0]
-                encoding = chunks[1]
+                encoding = chunks[1].upcase
                 data = chunks[2]
                 if encoding == 'B'
                     # puts "decoding data, original: #{str}"
@@ -81,7 +81,8 @@ class Email
                 part
             end
         end
-        return decoded.join(' ')
+        puts decoded.select { |p| !p.empty? }.to_s
+        return decoded.select { |p| !p.empty? }.join()
     end
 end
 
