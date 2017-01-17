@@ -2,16 +2,24 @@ require 'net/imap'
 require 'base64'
 require 'nkf'
 
+require './parser'
+
 imap = Net::IMAP.new('imap.gmail.com', {port: 993, ssl: true})
 key = File.read('gmail_key')
 imap.login('shholylol@gmail.com', key)
-imap.examine('[Gmail]/All Mail')
+# Net::IMAP::debug = true
 
 class Email
+
+    attr_reader :headers
     attr_reader :subject, :from, :to, :part
 
     def initialize(string)
-        @subject = string[/Subject:\s(.*)\r/, 1]
+        raw_headers, raw_body = parse_message(string)
+        # puts "HEADERS", headers
+        @headers = decode_headers(raw_headers)
+        # @subject = parse_header(string[/Subject:\s(.*)\r/, 1])
+        @subject = headers['Subject']
         from_string = string[/From:\s(.*)\r/, 1]
         @from = EmailContact.new(from_string)
         to_string = string[/To:\s(.*)\r/, 1]
@@ -31,8 +39,6 @@ class Email
         @part.html_view(folder_name)
     end
 
-    private
-
     def self.parse_part(string)
         header, rest = string.split("\r\n\r\n", 2)
         type = header[/Content\-Type:\s(:?[^;\s]+)/, 1]
@@ -49,6 +55,33 @@ class Email
             part = ImagePart.new(string)
         end
         return part
+    end
+
+    def decode_headers(headers)
+        return Hash[headers.map { |k, v| [k, decode_header(v)] } ]
+        # return headers.map { |k, v| { k => decode_header(v) } }
+    end
+
+    def decode_header(str)
+        parts = str.split("\r\n")
+        decoded = parts.map do |part|
+            if part.start_with?("=?")
+                chunks = str.split("?").drop(1)
+                charset = chunks[0]
+                encoding = chunks[1]
+                data = chunks[2]
+                if encoding == 'B'
+                    # puts "decoding data, original: #{str}"
+                    result = Base64.decode64(data)
+                elsif encoding == 'Q'
+                    result = data.unpack("M").first.gsub('_',' ')
+                end
+                result
+            else
+                part
+            end
+        end
+        return decoded.join(' ')
     end
 end
 
@@ -184,17 +217,36 @@ class ImagePart < Part
     end
 end
 
-imap.search(['UNSEEN']).each do |message_id|
-    message = imap.fetch(message_id, 'RFC822')
-        .first
-        .attr['RFC822']
-
-    email = Email.new(message)
-    puts email
-    # File.open('.tmppage.html', 'w') do |file|
-    #     file.write(email.part.to_s)
-    # end
-    email.html_view(Dir.pwd + '/tmppage')
-    system('open tmppage/page.html')
-    break
+def list_messages(imap, inbox)
+    imap.select('Inbox')
+    msgs = imap.search('ALL')
+    msgs.map do |msg_id|
+        raw_msg = imap.fetch(msg_id, 'RFC822').first.attr['RFC822']
+        email = Email.new(raw_msg)
+        puts email.subject
+        puts '   ---   '
+    end
 end
+
+list_messages(imap, 'Inbox')
+
+# imap.select('Inbox')
+# msgs = imap.search('ALL')
+# raw_msg = imap.fetch(msgs.first, 'RFC822').first.attr['RFC822']
+# puts raw_msg, '========================='
+# headers, body = parse_message(raw_msg)
+# puts headers['Subject: ']
+
+# Shoes.app height: 450, width: 650 do
+#     background white
+#     msgs = list_messages(imap, 'Inbox')
+#     stack do
+#         msgs.each do |msg|
+#             stack margin: 10 do
+#                 para strong(msg.subject)
+#                 para msg.from
+#                 stack { line 0, 0, 200, 0, stroke: grey }
+#             end
+#         end
+#     end
+# end
