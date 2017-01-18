@@ -9,9 +9,40 @@ class EmailWindow < Shoes::Widget
             reply.click {|| open_reply(email) }
             delete = button "Delete"
             delete.click {|| delete(email) }
+
+
+            if email.part && email.part.is_a?(MultipartAlternative)
+              html_index = email.part.parts.index { |p| p.is_a?(HtmlPart)}
+              if html_index
+                html_part = email.part.parts[html_index]
+              end
+            elsif email.part.is_a?(HtmlPart)
+              html_part = email.part
+            end
+
+            unless html_part.nil?
+              html_button = button "Open in browser"
+              html_button.click do
+                html_name = Time.new.to_i.to_s + '.html'
+                full_path = File.expand_path(html_name, '~/Downloads')
+                File.open(full_path, 'w+') do |f|
+                  f.write(html_part)
+                end
+                spawn("open #{full_path}")
+              end
+            end
         end
         para email.to_s
         attachments email
+        print_parts(email.part)
+    end
+  end
+
+  def print_parts(part, padding = 0)
+    if part.is_a?(Multipart)
+      part.parts.each {|part| print_parts(part, padding + 1) }
+    else
+      puts " ".ljust(padding) + part.class.name
     end
   end
 

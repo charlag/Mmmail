@@ -15,11 +15,22 @@ class Multipart < Part
 
     def initialize(string)
         header, content = string.split("\r\n\r\n", 2)
-        boundary = header[/boundary=(.*)$/, 1].chomp_both('"');
+        boundary = header[/boundary=(.*)$/, 1]
+        if boundary.end_with?("\r")
+          boundary = boundary[0..-2]
+        end
+        if boundary[-1] == ';'
+          boundary = boundary[0..-2]
+        end
+        if boundary[0] == '"' && boundary[-1] == '"'
+          boundary = boundary.chomp_both('"')
+        end
+        puts "~~~~~~~~~~~~~~~~~~~~~~~\n~~~~~~~~~~~~~~~~~~~~~~~\n boundary: #{boundary} \n~~~~~~~~~~~~~~~~~~~~~~~\n~~~~~~~~~~~~~~~~~~~~~~~\n"
         @parts = content
             .chomp("--#{boundary}--\r\n")
             .split("--#{boundary}")
             .drop(1)
+            .each { |part| puts "Part: #{part[0...250]}\n"}
             .map { |raw_part| RFC822Parser.parse_part(raw_part) }
     end
 
@@ -77,7 +88,8 @@ class TextPart < Part
     end
 
     def html_view(folder_name)
-        File.open(folder_name + '/page.html', 'w') { |file|
+      full_path = File.expand_path('page.html', '~/Downloads')
+        File.open(full_path, 'w+') { |file|
             file.write(@text)
         }
     end

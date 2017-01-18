@@ -13,9 +13,9 @@ DEBUG = false
 
 class RFC822Parser
     def self.parse_message(str)
-        raw_headers, raw_message = str.split(CRLF + CRLF, 2)
+        raw_headers, _ = str.split(CRLF + CRLF, 2)
         headers = decode_headers(parse_headers(raw_headers))
-        return headers, parse_part(raw_message)
+        return headers, parse_part(str)
     end
 
     def self.parse_headers(str)
@@ -84,6 +84,8 @@ class RFC822Parser
     def self.parse_part(string)
         header, rest = string.split("\r\n\r\n", 2)
         type = header[/Content\-Type:\s(:?[^;\s]+)/, 1]
+        puts "type: #{type}, header: #{header[0..400]} \n\n rest: #{rest[0..400]}"
+        puts "\n ==== ==== ----------------------- ==== ==== \n"
         case type
         when 'text/plain'
             part = TextPart.new(string)
