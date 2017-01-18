@@ -1,13 +1,10 @@
-class EmailContact
-    attr_reader :address, :name
-
-    def initialize(string)
+EmailContact = Struct.new(:address, :name) do
+    def self.from_string(string)
         email_in_braces = string[/<(.*?)>/m, 1]
         if email_in_braces != nil
-            @address = email_in_braces
-            @name = string.partition('<').first.strip
+            self.new email_in_braces, string.partition('<').first.strip
         else
-            @address = string
+            self.new string, nil
         end
     end
 

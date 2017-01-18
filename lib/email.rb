@@ -11,8 +11,8 @@ class Email
         @id = id
         @headers, @part = RFC822Parser.parse_message(string)
         @subject = headers['Subject'].force_encoding('UTF-8')
-        @from = EmailContact.new(@headers['From'].force_encoding('UTF-8'))
-        @to = EmailContact.new(@headers['To'].force_encoding('UTF-8'))
+        @from = EmailContact.from_string(@headers['From'].force_encoding('UTF-8'))
+        @to = EmailContact.from_string(@headers['To'].force_encoding('UTF-8'))
     end
 
 

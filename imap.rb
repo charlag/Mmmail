@@ -1,4 +1,5 @@
 require './lib/imap_client'
+require './lib/smtp'
 
 class EmailWindow < Shoes::Widget
 
@@ -34,15 +35,6 @@ class EmailWindow < Shoes::Widget
         end
         para email.to_s
         attachments email
-        print_parts(email.part)
-    end
-  end
-
-  def print_parts(part, padding = 0)
-    if part.is_a?(Multipart)
-      part.parts.each {|part| print_parts(part, padding + 1) }
-    else
-      puts " ".ljust(padding) + part.class.name
     end
   end
 
@@ -71,12 +63,31 @@ class EmailWindow < Shoes::Widget
   def open_reply(email)
     window do
       stack margin: 10 do
-        para "Address"
-        from = edit_line
-        from.text = email.from
+        flow do
+            para "From (Name)"
+            @from_name = edit_line
+            para "From (Address)"
+            @from_adress = edit_line
+        end
+        flow do
+            para "Address"
+            @to_address = edit_line
+            @to_address.text = email.from.address
+            para "Recepient"
+            @to_name = edit_line text: email.from.name
+        end
         para "Message"
-        edit_box
+        @body_field = edit_box
+
         send = button "Send"
+        send.click do
+            from = EmailContact.new @from_adress.text, @from_name.text
+            to = EmailContact.new @to_address.text, @to_name.text
+            message = SMTPMessage.new from, to, "", @body_field.text, Date.new, nil
+            SMTPClient.send_message(message)
+
+            close
+        end
       end
     end
   end
@@ -111,6 +122,8 @@ Shoes.app height: 450, width: 650 , title: 'MMMail' do
     end
   end
 
+  refresh_btn = button "Refresh"
+  refresh_btn.click {|| refresh_messages }
   @msgs_list = stack margin: 10
   @client = IMAPClient.new
   refresh_messages
