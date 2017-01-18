@@ -20,12 +20,12 @@ Content-Transfer-Encoding:8bit
 
 #{body}
 }
+        # dirty hack just to save an array before it blows up for no reason
+        attachs = attachments.dup
+        attachs ||= []
 
-        if attachments.nil?
-            attachments = []
-        end
-
-        formatted_attachments = attachments.map do |attach|
+        puts "attachs: #{attachs.to_s}"
+        formatted_attachments = attachs.map do |attach|
             file_content = File.read(attach)
             encoded_content = [file_content].pack 'm' # base64
             %{

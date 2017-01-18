@@ -79,11 +79,17 @@ class EmailWindow < Shoes::Widget
         para "Message"
         @body_field = edit_box
 
+        attachs = []
+        button "Add file..." do
+            attachs << ask_open_file
+        end
+
         send = button "Send"
         send.click do
             from = EmailContact.new @from_adress.text, @from_name.text
             to = EmailContact.new @to_address.text, @to_name.text
-            message = SMTPMessage.new from, to, "", @body_field.text, Date.new, nil
+            puts "attachs even before #{@attachs}"
+            message = SMTPMessage.new from, to, "", @body_field.text, Date.new, attachs
             SMTPClient.send_message(message)
 
             close
