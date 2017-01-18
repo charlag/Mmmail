@@ -84,7 +84,6 @@ class RFC822Parser
     def self.parse_part(string)
         header, rest = string.split("\r\n\r\n", 2)
         type = header[/Content\-Type:\s(:?[^;\s]+)/, 1]
-        puts "Type: #{type}"
         case type
         when 'text/plain'
             part = TextPart.new(string)
@@ -95,7 +94,6 @@ class RFC822Parser
         when /multipart\/alternative*/
             part = MultipartAlternative.new(string)
         when /image\/*/
-            puts "isImage"
             part = ImagePart.new(string)
         end
         return part

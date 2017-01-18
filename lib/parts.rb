@@ -1,6 +1,7 @@
 require 'base64'
 require 'nkf'
 require './lib/parser'
+require './lib/string_utils'
 
 class Part
     @content
@@ -14,13 +15,8 @@ class Multipart < Part
 
     def initialize(string)
         header, content = string.split("\r\n\r\n", 2)
-        puts "DEBUG: header, #{header}"
-        boundary = header[/boundary=(.*)$/, 1]
-        puts "DEBUG: Boundary: #{boundary}"
-        raw_parts = content
-            .chomp("--#{boundary}--\r\n")
-            .split("--#{boundary}")
-        ff = "--#{boundary}"
+        boundary = header[/boundary=(.*)$/, 1].chomp_both('"');
+        puts "boundary: #{boundary}"
         @parts = content
             .chomp("--#{boundary}--\r\n")
             .split("--#{boundary}")
@@ -96,11 +92,15 @@ class HtmlPart < TextPart
 end
 
 class ImagePart < Part
-    attr_reader :data, :name, :cid
+    attr_reader :data, :name, :filename, :cid
 
     def initialize(string)
         header, rest = string.split("\r\n\r\n", 2)
-        @name = header[/name=([^;\s]+)/, 1]
+        # puts header
+        # puts '------------------------------------------------------------'
+        # puts rest
+        @name = header[/name=([^;\s]+)/, 1].chomp_both('"')
+        @filename = header[/name=([^;\s]+)/, 1].chomp_both('"')
         raw_cid = header[/Content-ID:\s([^;\s]+)/, 1]
         @cid = raw_cid && raw_cid[1..-2]
         @data = Base64.decode64(rest)

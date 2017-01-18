@@ -24,11 +24,20 @@ class GUIHelper
             unless attachs.empty?
                 app.flow height: 20 do
                     attachs.each do |a|
-                        app.button a.name
+                        attach_btn = app.button a.name
+                        attach_btn.click {|| open_attach(a) }
                     end
                 end
             end
         end
+    end
+
+    def self.open_attach(attach)
+      attach_path = File.expand_path(attach.filename, '~/Downloads')
+      File.open(attach_path, 'wb') do |f|
+        f.write(attach.data)
+      end
+      spawn("open #{attach_path}")
     end
 end
 
