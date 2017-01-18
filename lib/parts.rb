@@ -16,7 +16,6 @@ class Multipart < Part
     def initialize(string)
         header, content = string.split("\r\n\r\n", 2)
         boundary = header[/boundary=(.*)$/, 1].chomp_both('"');
-        puts "boundary: #{boundary}"
         @parts = content
             .chomp("--#{boundary}--\r\n")
             .split("--#{boundary}")

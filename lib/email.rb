@@ -10,14 +10,14 @@ class Email
     def initialize(id, string)
         @id = id
         @headers, @part = RFC822Parser.parse_message(string)
-        @subject = headers['Subject']
-        @from = EmailContact.new(@headers['From'])
-        @to = EmailContact.new(@headers['To'])
+        @subject = headers['Subject'].force_encoding('UTF-8')
+        @from = EmailContact.new(@headers['From'].force_encoding('UTF-8'))
+        @to = EmailContact.new(@headers['To'].force_encoding('UTF-8'))
     end
 
 
     def to_s
-        "From: #{@from}\nTo: #{@to}\nSubject: #{@subject}\n\n#{@part}"
+      "From: #{@from}\nTo: #{@to}\nSubject: #{@subject}\n\n#{@part&.to_s&.force_encoding('UTF-8')}"
     end
 
     def html_view(folder_name)

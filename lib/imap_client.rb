@@ -19,5 +19,6 @@ class IMAPClient
 
     def delete_message(id)
         @imap.store(id, "+FLAGS", [:Deleted])
+        @imap.expunge()
     end
 end
