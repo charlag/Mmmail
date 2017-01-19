@@ -6,9 +6,9 @@ class EmailWindow < Shoes::Widget
   def initialize(email)
     stack margin: 10 do
         flow do
-            reply = button "Reply"
-            reply.click {|| open_reply(email) }
-            delete = button "Delete"
+            reply = button 'Reply'
+            reply.click {|| owner.open_new_letter(email) }
+            delete = button 'Delete'
             delete.click {|| delete(email) }
 
 
@@ -22,7 +22,7 @@ class EmailWindow < Shoes::Widget
             end
 
             unless html_part.nil?
-              html_button = button "Open in browser"
+              html_button = button 'Open in browser'
               html_button.click do
                 html_name = Time.new.to_i.to_s + '.html'
                 full_path = File.expand_path(html_name, '~/Downloads')
@@ -40,7 +40,7 @@ class EmailWindow < Shoes::Widget
 
   def attachments(email)
       if email.part.is_a? Multipart
-          attachs = email.part.parts.select {|p| p.is_a? ImagePart}
+          attachs = email.part.parts.select {|p| p.is_a? FilePart}
           unless attachs.empty?
               flow height: 20 do
                   attachs.each do |a|
@@ -58,44 +58,6 @@ class EmailWindow < Shoes::Widget
       f.write(attach.data)
     end
     spawn("open #{attach_path}")
-  end
-
-  def open_reply(email)
-    window do
-      stack margin: 10 do
-        flow do
-            para "From (Name)"
-            @from_name = edit_line
-            para "From (Address)"
-            @from_adress = edit_line
-        end
-        flow do
-            para "Address"
-            @to_address = edit_line
-            @to_address.text = email.from.address
-            para "Recepient"
-            @to_name = edit_line text: email.from.name
-        end
-        para "Message"
-        @body_field = edit_box
-
-        attachs = []
-        button "Add file..." do
-            attachs << ask_open_file
-        end
-
-        send = button "Send"
-        send.click do
-            from = EmailContact.new @from_adress.text, @from_name.text
-            to = EmailContact.new @to_address.text, @to_name.text
-            puts "attachs even before #{@attachs}"
-            message = SMTPMessage.new from, to, "", @body_field.text, Date.new, attachs
-            SMTPClient.send_message(message)
-
-            close
-        end
-      end
-    end
   end
 
   def delete(email)
@@ -128,8 +90,56 @@ Shoes.app height: 450, width: 650 , title: 'MMMail' do
     end
   end
 
-  refresh_btn = button "Refresh"
+  def open_new_letter(email = nil)
+    window do
+      stack margin: 10 do
+        flow margin: 10 do
+            para 'From (Name)'
+            @from_name = edit_line
+            para 'From (Address)'
+            @from_adress = edit_line
+        end
+        flow margin: 10 do
+            para 'Recepient'
+            @to_name = edit_line text: email&.from&.name
+            para 'Address'
+            @to_address = edit_line
+            @to_address.text = email&.from&.address
+        end
+        flow margin: 10 do
+          para 'Subject'
+          @subject = edit_line
+        end
+        para 'Message'
+        @body_field = edit_box
+
+        attachs = []
+        flow margin: 10 do
+          add_file = button ('Add file...')
+          files_list = para
+          add_file.click do
+            attachs << ask_open_file
+            files_list.text = attachs.join ' '
+          end
+        end
+
+        send = button 'Send'
+        send.click do
+            from = EmailContact.new @from_adress.text, @from_name.text
+            to = EmailContact.new @to_address.text, @to_name.text
+            message = SMTPMessage.new from, to, @subject.text, @body_field.text, Date.new, attachs
+            SMTPClient.send_message(message)
+            close
+        end
+      end
+    end
+  end
+
+  refresh_btn = button 'Refresh'
   refresh_btn.click {|| refresh_messages }
+
+  button ('New letter') { open_new_letter }
+
   @msgs_list = stack margin: 10
   @client = IMAPClient.new
   refresh_messages

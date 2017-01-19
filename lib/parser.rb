@@ -93,8 +93,12 @@ class RFC822Parser
             part = HtmlPart.new(string)
         when /multipart\/related*/
             part = Multipart.new(string)
+        when /multipart\/mixed*/
+            part = Multipart.new(string)
         when /multipart\/alternative*/
             part = MultipartAlternative.new(string)
+        when /application\/octet-stream*/
+          part = FilePart.new(string)
         when /image\/*/
             part = ImagePart.new(string)
         end

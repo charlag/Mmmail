@@ -102,23 +102,33 @@ class HtmlPart < TextPart
     end
 end
 
-class ImagePart < Part
-    attr_reader :data, :name, :filename, :cid
+class FilePart < Part
+  attr_reader :data, :name, :filename
+
+  def initialize(string)
+      header, rest = string.split("\r\n\r\n", 2)
+      @name = header[/name=([^;\s]+)/, 1].chomp_both('"')
+      @filename = header[/name=([^;\s]+)/, 1].chomp_both('"')
+      @data = Base64.decode64(rest)
+  end
+
+  def to_s
+    return "[#{name}]"
+  end
+end
+
+class ImagePart < FilePart
+    attr_reader :cid
 
     def initialize(string)
+        super(string)
         header, rest = string.split("\r\n\r\n", 2)
-        # puts header
-        # puts '------------------------------------------------------------'
-        # puts rest
-        @name = header[/name=([^;\s]+)/, 1].chomp_both('"')
-        @filename = header[/name=([^;\s]+)/, 1].chomp_both('"')
         raw_cid = header[/Content-ID:\s([^;\s]+)/, 1]
         @cid = raw_cid && raw_cid[1..-2]
-        @data = Base64.decode64(rest)
     end
 
     def to_s
-        return "[Image]"
+        return "[#{name}]"
     end
 
     def html_view(folder_name)

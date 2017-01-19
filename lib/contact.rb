@@ -1,18 +1,25 @@
-EmailContact = Struct.new(:address, :name) do
+class EmailContact
+    attr_reader :address, :name
+
+    def initialize(address, name)
+      @address = address
+      @name = name
+    end
+
     def self.from_string(string)
         email_in_braces = string[/<(.*?)>/m, 1]
         if email_in_braces != nil
-            self.new email_in_braces, string.partition('<').first.strip
+            new email_in_braces, string.partition('<').first.strip
         else
-            self.new string, nil
+            new string, nil
         end
     end
 
     def to_s
         unless @name.nil?
-            "#{@name} <#{@address}>"
+            return "#{@name} <#{@address}>"
         else
-            @address
+            return @address
         end
     end
 end

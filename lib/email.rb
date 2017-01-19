@@ -17,7 +17,14 @@ class Email
 
 
     def to_s
-      "From: #{@from}\nTo: #{@to}\nSubject: #{@subject}\n\n#{@part&.to_s&.force_encoding('UTF-8')}"
+      puts @headers['From']
+      puts @headers['From'].force_encoding('UTF-8')
+      puts @from.to_s
+      puts @from.to_s&.force_encoding('UTF-8')
+      "From: #{@from.to_s&.force_encoding('UTF-8')}\n" +
+      "To: #{@to.to_s&.force_encoding('UTF-8')}\n" +
+      "Subject: #{@subject}\n\n" +
+      "#{@part&.to_s&.force_encoding('UTF-8')}"
     end
 
     def html_view(folder_name)

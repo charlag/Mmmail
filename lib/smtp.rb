@@ -26,12 +26,13 @@ Content-Transfer-Encoding:8bit
 
         puts "attachs: #{attachs.to_s}"
         formatted_attachments = attachs.map do |attach|
+            file_name = File.basename(attach)
             file_content = File.read(attach)
             encoded_content = [file_content].pack 'm' # base64
             %{
-Content-Type: application/octet-stream; name=\"#{attach}\"
+Content-Type: application/octet-stream; name=\"#{file_name}\"
 Content-Transfer-Encoding:base64
-Content-Disposition: attachment; filename="#{attach}"
+Content-Disposition: attachment; filename="#{file_name}"
 
 #{encoded_content}
 }
